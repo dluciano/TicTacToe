@@ -122,22 +122,13 @@ ActionManager.prototype.getGridDivision = function(x, y) {
         border: 10
     };
     var index = 0;
-    console.log("Mouse: " + x + " " + y);
+    //console.log("Mouse: " + x + " " + y);
     for(var row = 0; row < 3; row++) {
         for(var col = 0; col < 3; col++) {
             var x0 = grid.x + (grid.w * col) + (grid.border * col) + xOffset;
             var y0 = grid.y + (grid.h * row) + (grid.border * row) + yOffset;
             var x1 = x0 + grid.w;
             var y1 = y0 + grid.h;
-            console.log({
-                    x0: x0,
-                    y0: y0,
-                    x1: x1,
-                    y1: y1,
-                    index: index,
-                    row: row,
-                    col: col
-                });
             //console.log("x0: " + x0 + " x1: " + x1 + " y0: " + y0 + " y1: " + y1);
             if(x >= x0 && x <= x1 && y >= y0 && y <= y1){
                 //console.log("yes: " + x + " " + y);
@@ -173,10 +164,8 @@ var HelloWorldLayer = cc.Layer.extend({
     
         this.sprite = new cc.Sprite(res.tablero_png);
         this.sprite.attr({
-            //x: size.width/2 - this.sprite.width/2,
-            //y: size.height/2 - this.sprite.height/2,
-            x: 0,
-            y: 0,
+            x: size.width/2 - this.sprite.width/2,
+            y: size.height/2 - this.sprite.height/2,
             anchorX: 0,
             anchorY: 0
         });
