@@ -1,11 +1,46 @@
-function ActionManager(mainLayer){
+var ZERO = 0;
+var X = 1;
+
+function Matrix(){
+    this.actualPawn = ZERO;
+    this.matrix = [
+        [null, null, null],
+        [null, null, null],
+        [null, null, null]
+    ];
+    this.onPawnAdded = function(){};
+}
+
+Matrix.prototype.takePlace = function(event) {
+    if(this.matrix[event.row][event.col] !== null)
+        return;
+    this.matrix[event.row][event.col] = this.actualPawn;
+    var evt = {
+                x0: event.x0,
+                y0: event.y0,
+                x1: event.x1,
+                y1: event.y1,
+                index: event.index,
+                row: event.row,
+                col: event.col,
+                pawn: this.actualPawn
+            };
+    this.onPawnAdded(evt);
+    this.nextPawn();
+}
+
+Matrix.prototype.nextPawn = function() {
+    this.actualPawn = this.actualPawn === ZERO ? X : ZERO;
+}
+
+function ActionManager(mainLayer) {
     this.mainLayer = mainLayer;
 }
 
-ActionManager.prototype.paintPawn = function(x, y){
+ActionManager.prototype.getGridDivision = function(x, y) {
      var xOffset = this.mainLayer.sprite.x,
          yOffset = this.mainLayer.sprite.y;
-    console.log("Offset: " + xOffset + ", " + yOffset);
+    //console.log("Offset: " + xOffset + ", " + yOffset);
     var grid = {
         x: 21,
         y: 23,
@@ -28,7 +63,9 @@ ActionManager.prototype.paintPawn = function(x, y){
                     y0: y0,
                     x1: x1,
                     y1: y1,
-                    index: index
+                    index: index,
+                    row: row,
+                    col: col
                 };
             }
             index++;
@@ -36,31 +73,21 @@ ActionManager.prototype.paintPawn = function(x, y){
     }
 }
 
+var aM = new ActionManager();
+var matrix = new Matrix();
+
 var HelloWorldLayer = cc.Layer.extend({
     sprite:null,
     ctor:function () {
-        //////////////////////////////
-        // 1. super init first
         this._super();
-
-        /////////////////////////////
-        // 2. add a menu item with "X" image, which is clicked to quit the program
-        //    you may modify it.
-        // ask the window size
+        var self = this;
         var size = cc.winSize;
-
-        /////////////////////////////
-        // 3. add your codes below...
-        // add a label shows "Hello World"
-        // create and initialize a label
+        
         var helloLabel = new cc.LabelTTF("TicTacToe V0.1", "Arial", 38);
-        // position the label on the center of the screen
         helloLabel.x = size.width / 2;
         helloLabel.y = size.height / 2 + 200;
-        // add the label as a child to this layer
         this.addChild(helloLabel, 5);
-
-        // add "HelloWorld" splash screen"
+    
         this.sprite = new cc.Sprite(res.tablero_png);
         this.sprite.attr({
             x: size.width/2 - this.sprite.width/2,
@@ -69,12 +96,24 @@ var HelloWorldLayer = cc.Layer.extend({
             anchorY: 0
         });
         this.addChild(this.sprite, 0);
-
+        
+        matrix.onPawnAdded = function(evt){
+            var img = evt.pawn === ZERO ? res.O_png: res.X_png;
+            var sprite = new cc.Sprite(img);
+            sprite.attr({
+                x: evt.x0,
+                y: evt.y0,
+                anchorX: 0,
+                anchorY: 0
+            });
+            self.addChild(sprite, 1);
+        };
+        
         return true;
     }
 });
 
-var aM = new ActionManager();
+
 
 var HelloWorldScene = cc.Scene.extend({
     onEnter:function () {
@@ -85,23 +124,13 @@ var HelloWorldScene = cc.Scene.extend({
         
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
-            onMouseMove: function(event){
-                var str = "MousePosition X: " + event.getLocationX() + "  Y:" + event.getLocationY();
-                // do something...
-            },
-            onMouseUp: function(event){
-                var str = "Mouse Up detected, Key: " + event.getButton();                
+            onMouseUp: function(event){                             
                 var x = event.getLocationX();
                 var y = event.getLocationY();
-                var i = aM.paintPawn(x, y);
-                console.log(i);
-            },
-            onMouseDown: function(event){
-                var str = "Mouse Down detected, Key: " + event.getButton();
-            },
-            onMouseScroll: function(event){
-                var str = "Mouse Scroll detected, X: " + event.getLocationX() + "  Y:" + event.getLocationY();
-            }
+                var evt = aM.getGridDivision(x, y);
+                if(evt)
+                    matrix.takePlace(evt);
+            }            
         }, layer);
     }
 });
