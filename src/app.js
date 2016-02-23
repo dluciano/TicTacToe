@@ -9,6 +9,9 @@ function Matrix(){
         [null, null, null]
     ];
     this.onPawnAdded = function(){};
+    this.finished = false;
+    this.onWon = function(){};
+    this.onTie = function(){};
 }
 
 Matrix.prototype.takePlace = function(event) {
@@ -26,19 +29,89 @@ Matrix.prototype.takePlace = function(event) {
                 pawn: this.actualPawn
             };
     this.onPawnAdded(evt);
+    this.finished = this.checkWinner();
+    if(this.finished)
+        return;
+    this.checkTie();    
     this.nextPawn();
+}
+
+Matrix.prototype.checkTie = function() {
+    for(var i = 0; i < 3; i++){
+        for(var j = 0; j < 3; j++){
+            if(this.matrix[i][j] === null)
+                return;
+        }
+    }
+    this.onTie();
+    this.finished = true;
+}
+
+function checkColumn(matrix, col, pawn){
+    return matrix[0][col] === pawn && 
+            matrix[1][col] === pawn &&
+            matrix[2][col] === pawn;
+    
+}
+
+function checkRow(matrix, row, pawn){
+    return matrix[row][0] === pawn && 
+            matrix[row][1] === pawn &&
+            matrix[row][2] === pawn;
+}
+
+function checkFirstDiagonal(matrix, pawn){
+    return matrix[0][0] === pawn &&
+            matrix[1][1] === pawn &&
+            matrix [2][2] === pawn;
+}
+
+function checkLastDiagonal(matrix, pawn){
+    return matrix[0][2] === pawn &&
+            matrix[1][1] === pawn &&
+            matrix [2][0] === pawn;
+}
+
+Matrix.prototype.checkWinner = function(){
+    for(var pawn = 0; pawn <= 1; pawn++){
+        for(var col = 0; col < 3; col++){
+            var won = checkColumn(this.matrix, col, pawn);
+            if(won){
+                this.onWon(pawn);
+                return true;
+            }
+        }
+        for(var row = 0; row < 3; row++){
+            var won = checkRow(this.matrix, row, pawn);
+            if(won){
+                this.onWon(pawn);
+                return true;
+            }
+        }
+        if(checkFirstDiagonal(this.matrix, pawn)){
+            this.onWon(pawn);
+            return true;
+        }
+        if(checkLastDiagonal(this.matrix, pawn)){
+            this.onWon(pawn);
+            return true;
+        }
+    }
 }
 
 Matrix.prototype.nextPawn = function() {
     this.actualPawn = this.actualPawn === ZERO ? X : ZERO;
 }
+var matrix = new Matrix();
 
 function ActionManager(mainLayer) {
     this.mainLayer = mainLayer;
 }
 
 ActionManager.prototype.getGridDivision = function(x, y) {
-     var xOffset = this.mainLayer.sprite.x,
+    if(matrix.finished)
+        return;
+    var xOffset = this.mainLayer.sprite.x,
          yOffset = this.mainLayer.sprite.y;
     //console.log("Offset: " + xOffset + ", " + yOffset);
     var grid = {
@@ -74,7 +147,7 @@ ActionManager.prototype.getGridDivision = function(x, y) {
 }
 
 var aM = new ActionManager();
-var matrix = new Matrix();
+
 
 var HelloWorldLayer = cc.Layer.extend({
     sprite:null,
@@ -109,11 +182,23 @@ var HelloWorldLayer = cc.Layer.extend({
             self.addChild(sprite, 1);
         };
         
+        matrix.onWon = function(pawn){
+            var wonLabel = new cc.LabelTTF((pawn===ZERO? "O":"X") +" Won", "Arial", 38);
+            wonLabel.x = size.width / 2;
+            wonLabel.y = size.height / 2;
+            self.addChild(wonLabel, 2);
+        };
+        
+        matrix.onTie = function(){
+            var wonLabel = new cc.LabelTTF("TIE! :/", "Arial", 38);
+            wonLabel.x = size.width / 2;
+            wonLabel.y = size.height / 2;
+            self.addChild(wonLabel, 2);
+        };
+        
         return true;
     }
 });
-
-
 
 var HelloWorldScene = cc.Scene.extend({
     onEnter:function () {
