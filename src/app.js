@@ -8,8 +8,8 @@ function Matrix(){
         [null, null, null],
         [null, null, null]
     ];
-    this.onPawnAdded = function(){};
     this.finished = false;
+    this.onPawnAdded = function(){};
     this.onWon = function(){};
     this.onTie = function(){};
 }
@@ -102,6 +102,7 @@ Matrix.prototype.checkWinner = function(){
 Matrix.prototype.nextPawn = function() {
     this.actualPawn = this.actualPawn === ZERO ? X : ZERO;
 }
+
 var matrix = new Matrix();
 
 function ActionManager(mainLayer) {
@@ -148,7 +149,6 @@ ActionManager.prototype.getGridDivision = function(x, y) {
 }
 
 var aM = new ActionManager();
-
 
 var HelloWorldLayer = cc.Layer.extend({
     sprite:null,
@@ -207,16 +207,32 @@ var HelloWorldScene = cc.Scene.extend({
         var layer = new HelloWorldLayer();
         this.addChild(layer);
         aM.mainLayer = layer;
+        var self = this;
         
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
             onMouseUp: function(event){                             
                 var x = event.getLocationX();
                 var y = event.getLocationY();
-                var evt = aM.getGridDivision(x, y);
-                if(evt)
-                    matrix.takePlace(evt);
+                self.manageEvent(x, y);
             }            
         }, layer);
+        
+        cc.eventManager.addListener({
+            event: cc.EventListener.TOUCH_ONE_BY_ONE,
+            swallowTouches: true,
+             //Process the touch end event
+            onTouchEnded: function (touch, event) {         
+                var delta = touch.getDelta();
+                var x = delta.x;
+                var y = delta.y;
+                self.manageEvent(x, y);
+            }            
+        }, layer);
+    },
+    manageEvent: function(x, y){
+        var evt = aM.getGridDivision(x, y);
+        if(evt)
+            matrix.takePlace(evt);
     }
 });
